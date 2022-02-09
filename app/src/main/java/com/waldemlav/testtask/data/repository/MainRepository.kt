@@ -5,9 +5,7 @@ import com.waldemlav.testtask.data.cache.mapper.CommentLocalDtoMapper
 import com.waldemlav.testtask.data.cache.mapper.ImageLocalDtoMapper
 import com.waldemlav.testtask.data.cache.model.CommentLocalDto
 import com.waldemlav.testtask.data.cache.model.PhotoLocalDto
-import com.waldemlav.testtask.data.network.AccountDataSource
-import com.waldemlav.testtask.data.network.CommentDataSource
-import com.waldemlav.testtask.data.network.ImageDataSource
+import com.waldemlav.testtask.data.network.*
 import com.waldemlav.testtask.data.network.mapper.CommentDtoMapper
 import com.waldemlav.testtask.data.network.mapper.ImageDtoMapper
 import com.waldemlav.testtask.data.network.model.*
@@ -17,7 +15,9 @@ import com.waldemlav.testtask.util.Resource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class MainRepository @Inject constructor(
     private val accountDataSource: AccountDataSource,
     private val imageDataSource: ImageDataSource,
@@ -26,7 +26,8 @@ class MainRepository @Inject constructor(
     private val commentDataSource: CommentDataSource,
     private val commentDtoMapper: CommentDtoMapper,
     private val imageLocalDtoMapper: ImageLocalDtoMapper,
-    private val commentLocalDtoMapper: CommentLocalDtoMapper
+    private val commentLocalDtoMapper: CommentLocalDtoMapper,
+    private val tokenInterceptor: TokenInterceptor
 ) {
 
     suspend fun signIn(userData: SignUserDtoIn): Resource<SignUserDtoOut> {
@@ -55,9 +56,9 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun downloadImages(token: String, page: Int): Resource<List<PhotoLocalDto>> {
+    suspend fun downloadImages(page: Int): Resource<List<PhotoLocalDto>> {
         return try {
-            val response = imageDataSource.getImages(token, page)
+            val response = imageDataSource.getImages(page)
             val result = response.data
             if (response.status == 200 && result != null)
                 Resource.Success(imageDtoMapper.mapListToCacheModel(result))
@@ -68,9 +69,9 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun uploadImage(token: String, imageDtoIn: ImageDtoIn): Resource<PhotoLocalDto> {
+    suspend fun uploadImage(imageDtoIn: ImageDtoIn): Resource<PhotoLocalDto> {
         return try {
-            val response = imageDataSource.uploadImage(token, imageDtoIn)
+            val response = imageDataSource.uploadImage(imageDtoIn)
             val result = response.data
             if (response.status == 200 && result != null)
                 Resource.Success(imageDtoMapper.mapToCacheModel(result))
@@ -99,9 +100,9 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun deleteImage(token: String, id: Int): Boolean {
+    suspend fun deleteImage(id: Int): Boolean {
         return try {
-            val response = imageDataSource.deleteImage(token, id)
+            val response = imageDataSource.deleteImage(id)
             response.status == 200
         } catch (e: Exception) {
             false
@@ -114,11 +115,9 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun downloadComments(
-        token: String, imageId: Int, page: Int): Resource<List<CommentLocalDto>> {
-
+    suspend fun downloadComments(imageId: Int, page: Int): Resource<List<CommentLocalDto>> {
         return try {
-            val response = commentDataSource.getComments(token, imageId, page)
+            val response = commentDataSource.getComments(imageId, page)
             val result = response.data
             if (response.status == 200 && result != null)
                 Resource.Success(commentDtoMapper.mapListToCacheModel(result, imageId))
@@ -129,11 +128,9 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun uploadComment(
-        token: String, commentDtoIn: CommentDtoIn, imageId: Int): Resource<CommentLocalDto> {
-
+    suspend fun uploadComment(commentDtoIn: CommentDtoIn, imageId: Int): Resource<CommentLocalDto> {
         return try {
-            val response = commentDataSource.postComment(token, commentDtoIn, imageId)
+            val response = commentDataSource.postComment(commentDtoIn, imageId)
             val result = response.data
             if (response.status == 200 && result != null)
                 Resource.Success(commentDtoMapper.mapToCacheModel(result, imageId))
@@ -162,9 +159,9 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun deleteComment(token: String, commentId: Int, imageId: Int): Boolean {
+    suspend fun deleteComment(commentId: Int, imageId: Int): Boolean {
         return try {
-            val response = commentDataSource.deleteComment(token, commentId, imageId)
+            val response = commentDataSource.deleteComment(commentId, imageId)
             response.status == 200
         } catch (e: Exception) {
             false
@@ -188,5 +185,9 @@ class MainRepository @Inject constructor(
         return withContext(Dispatchers.IO) {
             localDao.getSavedCommentsCount() == 0
         }
+    }
+
+    fun setToken(token: String) {
+        tokenInterceptor.token = token
     }
 }

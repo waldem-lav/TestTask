@@ -27,7 +27,6 @@ class MainViewModel @Inject constructor(
     private val _isUserLoggedIn = MutableLiveData(Event(false))
     val isUserLoggedIn: LiveData<Event<Boolean>> = _isUserLoggedIn
 
-    private lateinit var accessToken: String
     lateinit var login: String
     var isCacheAvailable = false
     var isCacheEmpty = false
@@ -46,7 +45,7 @@ class MainViewModel @Inject constructor(
                 is Resource.Success -> {
                     login = accountResponse.data!!.login
                     _isUserLoggedIn.value = Event(true)
-                    accessToken = accountResponse.data.token
+                    repository.setToken(accountResponse.data.token)
                 }
             }
         }
@@ -59,7 +58,7 @@ class MainViewModel @Inject constructor(
                 is Resource.Success -> {
                     login = accountResponse.data!!.login
                     _isUserLoggedIn.value = Event(true)
-                    accessToken = accountResponse.data.token
+                    repository.setToken(accountResponse.data.token)
                 }
             }
         }
@@ -72,7 +71,7 @@ class MainViewModel @Inject constructor(
 
     fun uploadImage(imageDtoIn: ImageDtoIn) {
         viewModelScope.launch {
-            when (val imageResponse = repository.uploadImage(accessToken, imageDtoIn)) {
+            when (val imageResponse = repository.uploadImage(imageDtoIn)) {
                 is Resource.Error -> _errorMessage.value = Event(
                     "Uploading error: " + imageResponse.message)
                 is Resource.Success -> {
@@ -85,7 +84,7 @@ class MainViewModel @Inject constructor(
 
     fun deleteImage(photoData: PhotoData) {
         viewModelScope.launch {
-            if (repository.deleteImage(accessToken, photoData.id)) {
+            if (repository.deleteImage(photoData.id)) {
                 repository.deleteImageFromCache(photoData)
                 getPhotoList()
             } else
@@ -95,7 +94,7 @@ class MainViewModel @Inject constructor(
 
     fun uploadComment(commentDtoIn: CommentDtoIn, imageId: Int) {
         viewModelScope.launch {
-            when (val commentResponse = repository.uploadComment(accessToken, commentDtoIn, imageId)){
+            when (val commentResponse = repository.uploadComment(commentDtoIn, imageId)){
                 is Resource.Error -> _errorMessage.value = Event(
                     "Uploading error: " + commentResponse.message)
                 is Resource.Success -> {
@@ -108,7 +107,7 @@ class MainViewModel @Inject constructor(
 
     fun deleteComment(commentData: CommentData) {
         viewModelScope.launch {
-            if (repository.deleteComment(accessToken, commentData.id, commentData.imageId)) {
+            if (repository.deleteComment(commentData.id, commentData.imageId)) {
                 repository.deleteCommentFromCache(commentData)
                 getCommentList(commentData.imageId)
             } else
@@ -136,7 +135,7 @@ class MainViewModel @Inject constructor(
             val cachePhotosList = mutableListOf<PhotoLocalDto>()
             var page = 0
             while (true) {
-                when (val imagesResponse = repository.downloadImages(accessToken, page)) {
+                when (val imagesResponse = repository.downloadImages(page)) {
                     is Resource.Success -> {
                         if (imagesResponse.data.isNullOrEmpty())
                             break
@@ -163,10 +162,7 @@ class MainViewModel @Inject constructor(
             loop@ for (photo in list) {
                 var page = 0
                 while (true) {
-                    when (val commentResponse = repository.downloadComments(
-                        accessToken, photo.id, page
-                    )) {
-
+                    when (val commentResponse = repository.downloadComments(photo.id, page)) {
                         is Resource.Success -> {
                             if (commentResponse.data.isNullOrEmpty())
                                 break
