@@ -3,10 +3,10 @@ package com.waldemlav.testtask.data.network.mapper
 import com.waldemlav.testtask.data.cache.model.CommentLocalDto
 import com.waldemlav.testtask.data.network.model.CommentDtoOut
 import javax.inject.Inject
+import javax.inject.Singleton
 
-class CommentDtoMapper
-@Inject
-constructor() {
+@Singleton
+class CommentDtoMapper @Inject constructor() {
 
     fun mapToCacheModel(dtoModel: CommentDtoOut, imageId: Int): CommentLocalDto {
         return CommentLocalDto(

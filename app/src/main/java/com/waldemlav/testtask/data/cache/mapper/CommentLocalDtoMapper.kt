@@ -3,10 +3,10 @@ package com.waldemlav.testtask.data.cache.mapper
 import com.waldemlav.testtask.data.cache.model.CommentLocalDto
 import com.waldemlav.testtask.domain.model.CommentData
 import javax.inject.Inject
+import javax.inject.Singleton
 
-class CommentLocalDtoMapper
-@Inject
-constructor() {
+@Singleton
+class CommentLocalDtoMapper @Inject constructor() {
 
     private fun mapToDomainModel(cacheModel: CommentLocalDto): CommentData {
         return CommentData(

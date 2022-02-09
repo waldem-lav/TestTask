@@ -3,10 +3,10 @@ package com.waldemlav.testtask.data.network.mapper
 import com.waldemlav.testtask.data.cache.model.PhotoLocalDto
 import com.waldemlav.testtask.data.network.model.ImageDtoOut
 import javax.inject.Inject
+import javax.inject.Singleton
 
-class ImageDtoMapper
-@Inject
-constructor() {
+@Singleton
+class ImageDtoMapper @Inject constructor() {
 
     fun mapToCacheModel(dtoModel: ImageDtoOut): PhotoLocalDto {
         return PhotoLocalDto(

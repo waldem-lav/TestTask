@@ -6,7 +6,9 @@ import com.waldemlav.testtask.data.network.model.SignUserDtoOut
 import retrofit2.http.Body
 import retrofit2.http.POST
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class AccountDataSource @Inject constructor(
     private val accountApi: AccountApi
 ) {
